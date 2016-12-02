@@ -33,10 +33,100 @@ inputStr.split(', ').forEach(cmd => {
               moveMap.get(currentDirection) + moveDist);
 });
 
-console.log(moveMap);
-console.log(`N/S: ${moveMap.get(0) - moveMap.get(180)}`);
-console.log(`E/W: ${moveMap.get(90) - moveMap.get(270)}`);
 const totalDistance = Math.abs(moveMap.get(0) - moveMap.get(180)) + 
                       Math.abs(moveMap.get(90) - moveMap.get(270));
 
 console.log(`You are ${totalDistance} blocks away`);
+
+
+
+// Part Two oh man.
+// Brute Force: Track every point ever visited, and search. Ewwwwwwww
+// Optimization: Track end points, compare all perpendicular lines within boundaries you cross. Doesn't help though does it
+// Alcohol got to me ok I'm overthinking this, the answer is always a hashmap
+
+const visitorLog = new Map(); // can't use array cuz negative locations
+visitorLog.set(0, new Map()); // initialize
+let doubleVisit = { x: 0, y: 0 };
+const currentLocation = { x: 0, y: 0 };
+currentDirection = 0; // reset
+
+inputStr.split(', ').some((cmd, idx) => {
+  const command = cmd.match(/([RL])([0-9]+)/i);
+  const moveDir = command[1];
+  const moveDist = parseInt(command[2], 10);
+  let moveOffset = 1;
+
+  // I hate this but I'm reusing it
+  if (moveDir === 'L') {
+    currentDirection -= 90;
+    
+    if (currentDirection < 0) {
+      currentDirection = 270;
+    }
+  } else {
+    currentDirection += 90;
+
+    if (currentDirection > 270) {
+      currentDirection = 0;
+    }
+  }
+
+  // We goin backwards?
+  if (currentDirection >= 180) {
+    moveOffset *= -1;
+  }
+
+  // N/S then E/W
+  if (currentDirection === 0 || currentDirection === 180) {
+    for (let i = 1; i <= moveDist; i++) {
+      const target = {
+        x: currentLocation.x,
+        y: currentLocation.y + (i * moveOffset),
+      };
+
+      if (visitorLog.get(target.x).get(target.y) === true) {
+        doubleVisit = target;
+        return true;
+      } else {
+        visitorLog.get(target.x).set(target.y, true);
+      }
+    }
+  } else {
+    for (let i = 1; i <= moveDist; i++) {
+      const target = {
+        x: currentLocation.x + (i * moveOffset),
+        y: currentLocation.y,
+      };
+
+      if (!visitorLog.has(target.x)) {
+        visitorLog.set(target.x, new Map());
+      }
+
+      if (visitorLog.get(target.x).get(target.y) === true) {
+        doubleVisit = target;
+        return true;
+      } else {
+        visitorLog.get(target.x).set(target.y, true);
+      }
+    }
+  }
+
+  switch (currentDirection) {
+    case 0:
+      currentLocation.y += moveDist;
+      break;
+    case 90:
+      currentLocation.x += moveDist;
+      break;
+    case 180:
+      currentLocation.y -= moveDist;
+      break;
+    case 270:
+      currentLocation.x -= moveDist;
+      break;
+  }
+});
+
+// that code is so nasty pls never look at it again
+console.log(`The first repeated stop is ${Math.abs(doubleVisit.x) + Math.abs(doubleVisit.y)} blocks away.`);
