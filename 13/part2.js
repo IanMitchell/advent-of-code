@@ -1,3 +1,4 @@
+// NOTE: Optimized for speed of submission rather than runtime. Pls no judge
 const ndarray = require('ndarray');
 const createPlanner = require('l1-path-finder');
 
